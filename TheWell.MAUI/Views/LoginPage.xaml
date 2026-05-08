@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:TheWell.MAUI.ViewModels"
+             x:Class="TheWell.MAUI.Views.LoginPage"
+             x:DataType="vm:LoginViewModel"
+             Title="The Well">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="32" Spacing="16" VerticalOptions="Center">
+
+            <Label Text="The Well" FontSize="36" FontAttributes="Bold"
+                   HorizontalOptions="Center" TextColor="#1A6B8A" />
+            <Label Text="Habit Tracker" FontSize="16" HorizontalOptions="Center"
+                   TextColor="#555" Margin="0,0,0,24" />
+
+            <Entry Placeholder="E-number" Text="{Binding ENumber}"
+                   Keyboard="Default" IsPassword="False" />
+            <Entry Placeholder="Password" Text="{Binding Password}" IsPassword="True" />
+
+            <Label Text="{Binding ErrorMessage}" TextColor="Red" IsVisible="{Binding ErrorMessage, Converter={StaticResource StringToBoolConverter}}" />
+
+            <Button Text="Sign In" Command="{Binding LoginCommand}"
+                    IsEnabled="{Binding IsBusy, Converter={StaticResource InvertBoolConverter}}"
+                    BackgroundColor="#1A6B8A" TextColor="White" CornerRadius="8" HeightRequest="48" />
+
+            <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" />
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:TheWell.MAUI.ViewModels"
+             x:Class="TheWell.MAUI.Views.GoalPage"
+             x:DataType="vm:GoalViewModel"
+             Title="My Commitment Plan">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="24" Spacing="14">
+            <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" />
+
+            <Label Text="My Habit" FontAttributes="Bold" TextColor="#1A6B8A" />
+            <Label Text="{Binding Intake.MyHabit}" />
+            <BoxView HeightRequest="1" BackgroundColor="#EEE" />
+
+            <Label Text="My Goal" FontAttributes="Bold" TextColor="#1A6B8A" />
+            <Label Text="{Binding Intake.MyGoal}" />
+            <BoxView HeightRequest="1" BackgroundColor="#EEE" />
+
+            <Label Text="I am a person who..." FontAttributes="Bold" TextColor="#1A6B8A" />
+            <Label Text="{Binding Intake.IAmPersonWho}" LineBreakMode="WordWrap" />
+            <BoxView HeightRequest="1" BackgroundColor="#EEE" />
+
+            <Label Text="Strategies" FontAttributes="Bold" TextColor="#1A6B8A" />
+            <Label Text="1." FontSize="13" TextColor="#888" />
+            <Label Text="{Binding Intake.Strategy1}" LineBreakMode="WordWrap" />
+            <Label Text="2." FontSize="13" TextColor="#888" />
+            <Label Text="{Binding Intake.Strategy2}" LineBreakMode="WordWrap" />
+            <BoxView HeightRequest="1" BackgroundColor="#EEE" />
+
+            <Label Text="To improve myself I will..." FontAttributes="Bold" TextColor="#1A6B8A" />
+            <Label Text="{Binding Intake.ToImproveMyselfIWill}" LineBreakMode="WordWrap" />
+            <BoxView HeightRequest="1" BackgroundColor="#EEE" />
+
+            <Label Text="Reward myself with..." FontAttributes="Bold" TextColor="#1A6B8A" />
+            <Label Text="{Binding Intake.RewardMyselfWith}" LineBreakMode="WordWrap" />
+            <BoxView HeightRequest="1" BackgroundColor="#EEE" />
+
+            <Label Text="People I can talk to for encouragement" FontAttributes="Bold" TextColor="#1A6B8A" />
+            <Label Text="{Binding Intake.PeopleForEncouragement}" LineBreakMode="WordWrap" />
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

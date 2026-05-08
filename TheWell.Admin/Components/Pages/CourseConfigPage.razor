@@ -1,0 +1,370 @@
+@page "/course-config"
+@using TheWell.Core.Entities
+@using TheWell.Core.DTOs
+@using TheWell.Data.Repositories
+@using System.Net.Http.Json
+@using System.Text.Json
+@inject CourseConfigRepository ConfigRepo
+@inject WeekLockRepository WeekLockRepo
+@inject IHttpClientFactory HttpFactory
+@inject IConfiguration Config
+@rendermode InteractiveServer
+
+<PageTitle>Course Config — The Well Admin</PageTitle>
+
+<h1>Course Configuration</h1>
+
+<!-- ════════════════════════════════════════════
+     COURSE DATE
+     ════════════════════════════════════════════ -->
+@if (_current is not null)
+{
+    <div class="alert alert-success d-flex justify-content-between align-items-center">
+        <div>
+            <strong>Active Course:</strong>
+            Start <strong>@_current.CourseStartDate.ToString("dddd, MMMM d yyyy")</strong>
+            → End <strong>@_current.CourseEndDate.ToString("dddd, MMMM d yyyy")</strong>
+        </div>
+        <button class="btn btn-danger btn-sm ms-3" @onclick="ResetCourse">Reset Course</button>
+    </div>
+}
+else
+{
+    <div class="alert alert-warning">No course date set. Students will see an empty calendar.</div>
+
+    <h4>Set the first day of the 8-week module</h4>
+    <p class="text-muted">The start date must be a <strong>Monday</strong>. The end date (55 days later, a Sunday) is calculated automatically.</p>
+
+    <div class="row g-2 align-items-end">
+        <div class="col-md-4">
+            <label class="form-label">Course Start Date <span class="text-muted">(Mondays only)</span></label>
+            <input type="date" class="form-control"
+                   min="@EarliestMonday.ToString("yyyy-MM-dd")"
+                   step="7"
+                   @bind="_startDate" />
+            <div class="form-text">Only Mondays are selectable.</div>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">Calculated End Date</label>
+            <input type="text" class="form-control" readonly value="@EndDatePreview" />
+        </div>
+        <div class="col-md-2">
+            <button class="btn btn-success w-100" @onclick="SaveConfig">Save Date</button>
+        </div>
+    </div>
+
+    @if (_error is not null)
+    {
+        <div class="alert alert-danger mt-2">@_error</div>
+    }
+}
+
+@if (_message is not null)
+{
+    <div class="alert alert-info mt-3">@_message</div>
+}
+
+<hr class="my-4" />
+
+<!-- ════════════════════════════════════════════
+     POPULATE / AUTO-UNLOCK
+     ════════════════════════════════════════════ -->
+<h2>Sync Weeks from WordPress</h2>
+
+<div class="alert alert-light border">
+    <h6>Instructions</h6>
+    <ol class="mb-0">
+        <li>Set a course start date above (must be a Monday).</li>
+        <li>Add all 8 weekly module posts in WordPress, each with the correct <strong>week_number</strong> field.</li>
+        <li>Press <strong>Populate</strong> to automatically unlock the weeks that should be available based on today's date.</li>
+        <li>Week 1 = start date → first Sunday. Week 2 = following Monday → next Sunday, and so on.</li>
+        <li>You can also manually lock or unlock individual weeks below.</li>
+    </ol>
+</div>
+
+@if (_current is null)
+{
+    <div class="alert alert-warning">Set a course start date before populating.</div>
+}
+else
+{
+    <div class="d-flex align-items-center gap-3 mb-3">
+        <button class="btn btn-primary" @onclick="PopulateWeeks" disabled="@_populating">
+            @if (_populating)
+            {
+                <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+                <span>Syncing…</span>
+            }
+            else
+            {
+                <span>Populate</span>
+            }
+        </button>
+        <span class="text-muted small">Unlocks weeks based on today's date and the course start date.</span>
+    </div>
+
+    @if (_populateMessage is not null)
+    {
+        <div class="alert @(_populateError ? "alert-danger" : "alert-success") mt-2">
+            @_populateMessage
+        </div>
+    }
+}
+
+<hr class="my-4" />
+
+<!-- ════════════════════════════════════════════
+     WEEK LOCK / UNLOCK
+     ════════════════════════════════════════════ -->
+<h2>Week Access Control</h2>
+<p class="text-muted">
+    Manually override which weeks students can access.
+    <strong>Locked</strong> = hidden from students.
+    <strong>Unlocked</strong> = visible and readable.
+</p>
+
+@if (_weeksLoading)
+{
+    <div class="d-flex align-items-center gap-2">
+        <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+        <span>Loading weeks from WordPress…</span>
+    </div>
+}
+else if (_weekError is not null)
+{
+    <div class="alert alert-danger">@_weekError</div>
+}
+else if (_weeks.Count == 0)
+{
+    <div class="alert alert-warning">
+        No weekly content found in WordPress. Publish your weekly_content posts first, then reload this page.
+    </div>
+}
+else
+{
+    <div class="row g-3">
+        @foreach (var week in _weeks)
+        {
+            <div class="col-md-4 col-lg-3">
+                <div class="card h-100 @(week.IsLocked ? "border-secondary" : "border-success")"
+                     style="border-width:2px">
+                    <div class="card-body d-flex flex-column gap-2">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h6 class="card-title mb-0">Week @week.WeekNumber</h6>
+                                <small class="text-muted">Module @week.ModuleNumber</small>
+                            </div>
+                            <span class="badge @(week.IsLocked ? "bg-secondary" : "bg-success")">
+                                @(week.IsLocked ? "Locked" : "Unlocked")
+                            </span>
+                        </div>
+                        <p class="card-text small text-muted mb-0">
+                            @(string.IsNullOrWhiteSpace(week.ModuleTitle) ? "(No title)" : week.ModuleTitle)
+                        </p>
+                        @if (_current is not null)
+                        {
+                            var weekStart = _current.CourseStartDate.AddDays((week.WeekNumber - 1) * 7);
+                            <small class="text-muted">Starts @weekStart.ToString("ddd d MMM")</small>
+                        }
+                        <div class="mt-auto">
+                            @if (week.IsLocked)
+                            {
+                                <button class="btn btn-success btn-sm w-100"
+                                        @onclick="() => ToggleLock(week, false)">
+                                    Unlock for Students
+                                </button>
+                            }
+                            else
+                            {
+                                <button class="btn btn-outline-secondary btn-sm w-100"
+                                        @onclick="() => ToggleLock(week, true)">
+                                    Lock Week
+                                </button>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+    <p class="text-muted small mt-3">
+        @_weeks.Count(w => !w.IsLocked) of @_weeks.Count weeks unlocked.
+        &nbsp;|&nbsp;
+        <button class="btn btn-link btn-sm p-0" @onclick="LoadWeeks">Refresh from WordPress</button>
+    </p>
+}
+
+@if (_weekMessage is not null)
+{
+    <div class="alert alert-info mt-3">@_weekMessage</div>
+}
+
+@code {
+    // ── Course date ────────────────────────────
+    private CourseConfig? _current;
+    private DateOnly _startDate = NextMonday;
+    private string? _message;
+    private string? _error;
+
+    // ── Populate ───────────────────────────────
+    private bool _populating;
+    private string? _populateMessage;
+    private bool _populateError;
+
+    // ── Week locks ─────────────────────────────
+    private List<WeekSummaryResponse> _weeks = [];
+    private bool _weeksLoading = true;
+    private string? _weekError;
+    private string? _weekMessage;
+
+    // The most recent Monday — used to compute the 2-week-back minimum
+    private static DateOnly CurrentOrPrevMonday
+    {
+        get
+        {
+            var d = DateOnly.FromDateTime(DateTime.Today);
+            while (d.DayOfWeek != DayOfWeek.Monday) d = d.AddDays(-1);
+            return d;
+        }
+    }
+
+    // Allow up to 2 Mondays back (testing feature)
+    private static DateOnly EarliestMonday => CurrentOrPrevMonday.AddDays(-14);
+
+    // Default picker value: this Monday (or next Monday if today isn't Monday)
+    private static DateOnly NextMonday
+    {
+        get
+        {
+            var d = DateOnly.FromDateTime(DateTime.Today);
+            while (d.DayOfWeek != DayOfWeek.Monday) d = d.AddDays(1);
+            return d;
+        }
+    }
+
+    private string EndDatePreview => _startDate.AddDays(55).ToString("dddd, MMMM d yyyy");
+
+    protected override async Task OnInitializedAsync()
+    {
+        _current = await ConfigRepo.GetCurrentAsync();
+        await LoadWeeks();
+    }
+
+    // ── Course date actions ────────────────────
+    private async Task SaveConfig()
+    {
+        _error = null;
+        if (_startDate.DayOfWeek != DayOfWeek.Monday)
+        {
+            _error = "Selected date is not a Monday. Use the browser's date arrows to pick a Monday.";
+            return;
+        }
+
+        var config = new CourseConfig
+        {
+            CourseStartDate = _startDate,
+            CourseEndDate   = _startDate.AddDays(55),
+            SetByAdminID    = Guid.Empty,
+            SetAt           = DateTime.UtcNow
+        };
+        await ConfigRepo.SetAsync(config);
+        _current = config;
+        _message = $"Course saved: {config.CourseStartDate:ddd MMM d} → {config.CourseEndDate:ddd MMM d yyyy}";
+    }
+
+    private async Task ResetCourse()
+    {
+        await ConfigRepo.DeleteAllAsync();
+        _current = null;
+        _startDate = NextMonday;
+        _message = "Course date reset. Students will see an empty calendar until a new date is set.";
+        _populateMessage = null;
+    }
+
+    // ── Populate ───────────────────────────────
+    private async Task PopulateWeeks()
+    {
+        _populating = true;
+        _populateMessage = null;
+        _populateError = false;
+        try
+        {
+            var http = HttpFactory.CreateClient();
+            var response = await http.PostAsync("http://localhost:5139/api/content/populate", null);
+            var body = await response.Content.ReadFromJsonAsync<JsonElement>();
+
+            if (response.IsSuccessStatusCode)
+            {
+                _populateMessage = body.TryGetProperty("message", out var m) ? m.GetString() : "Done.";
+            }
+            else
+            {
+                _populateError = true;
+                _populateMessage = body.TryGetProperty("error", out var e) ? e.GetString() : "Populate failed.";
+            }
+
+            // Reload week list so cards update
+            await LoadWeeks();
+        }
+        catch (Exception ex)
+        {
+            _populateError = true;
+            _populateMessage = $"Error: {ex.Message}";
+        }
+        finally { _populating = false; }
+    }
+
+    // ── Week lock actions ──────────────────────
+    private async Task LoadWeeks()
+    {
+        _weeksLoading = true;
+        _weekError = null;
+        try
+        {
+            var http = HttpFactory.CreateClient();
+            var wpBase = Config["WordPress:BaseUrl"] ?? "";
+            var url = $"{wpBase}/wp-json/wp/v2/weekly_content?acf_format=standard&per_page=100&orderby=date&order=asc";
+            var response = await http.GetStringAsync(url);
+            var items = JsonSerializer.Deserialize<JsonElement[]>(response) ?? [];
+
+            var locks = await WeekLockRepo.GetAllAsync();
+            var lockMap = locks.ToDictionary(l => l.WeekNumber, l => l.IsLocked);
+
+            var summaries = new List<WeekSummaryResponse>();
+            foreach (var item in items)
+            {
+                if (!item.TryGetProperty("acf", out var acf)) continue;
+                if (!acf.TryGetProperty("week_number", out var wn)) continue;
+                int weekNum = wn.ValueKind == JsonValueKind.Number
+                    ? wn.GetInt32()
+                    : int.TryParse(wn.GetString(), out var p) ? p : 0;
+                if (weekNum == 0) continue;
+
+                int moduleNum = acf.TryGetProperty("module_number", out var mn)
+                    ? (mn.ValueKind == JsonValueKind.Number ? mn.GetInt32() : weekNum) : weekNum;
+                string title = acf.TryGetProperty("module_title", out var mt) ? mt.GetString() ?? "" : "";
+                bool isLocked = lockMap.TryGetValue(weekNum, out var locked) ? locked : true;
+
+                summaries.Add(new WeekSummaryResponse(weekNum, moduleNum, title, isLocked));
+            }
+
+            _weeks = summaries.OrderBy(w => w.WeekNumber).ToList();
+        }
+        catch (Exception ex)
+        {
+            _weekError = $"Could not load weeks from WordPress: {ex.Message}";
+        }
+        finally { _weeksLoading = false; }
+    }
+
+    private async Task ToggleLock(WeekSummaryResponse week, bool isLocked)
+    {
+        await WeekLockRepo.SetLockAsync(week.WeekNumber, isLocked);
+        var idx = _weeks.IndexOf(week);
+        if (idx >= 0) _weeks[idx] = week with { IsLocked = isLocked };
+        _weekMessage = isLocked
+            ? $"Week {week.WeekNumber} locked."
+            : $"Week {week.WeekNumber} unlocked — students can now read it.";
+    }
+}

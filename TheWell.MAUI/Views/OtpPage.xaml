@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:TheWell.MAUI.ViewModels"
+             x:Class="TheWell.MAUI.Views.OtpPage"
+             x:DataType="vm:OtpViewModel"
+             Title="Password Recovery">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="32" Spacing="16" VerticalOptions="Center">
+            <Label Text="Forgot Password" FontSize="24" FontAttributes="Bold" HorizontalOptions="Center" />
+
+            <Entry Placeholder="University Email" Text="{Binding Email}" Keyboard="Email" />
+            <Button Text="Send Code" Command="{Binding RequestOtpCommand}"
+                    IsVisible="{Binding OtpSent, Converter={StaticResource InvertBoolConverter}}"
+                    BackgroundColor="#1A6B8A" TextColor="White" CornerRadius="8" />
+
+            <VerticalStackLayout IsVisible="{Binding OtpSent}" Spacing="12">
+                <Label Text="{Binding Message}" TextColor="#555" HorizontalTextAlignment="Center" />
+                <Entry Placeholder="6-Digit Code" Text="{Binding Otp}" Keyboard="Numeric" MaxLength="6" />
+                <Button Text="Verify Code" Command="{Binding VerifyOtpCommand}"
+                        BackgroundColor="#1A6B8A" TextColor="White" CornerRadius="8" />
+            </VerticalStackLayout>
+
+            <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" />
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:TheWell.MAUI.ViewModels"
+             x:Class="TheWell.MAUI.Views.IntakePage"
+             x:DataType="vm:IntakeViewModel"
+             Title="My Commitment Plan">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="24" Spacing="16">
+            <Label Text="Your Commitment Plan" FontSize="22" FontAttributes="Bold"
+                   HorizontalOptions="Center" TextColor="#1A6B8A" />
+            <Label Text="Complete this once to unlock your dashboard."
+                   TextColor="#555" HorizontalTextAlignment="Center" Margin="0,0,0,8" />
+
+            <Label Text="My Habit" FontAttributes="Bold" />
+            <Entry Placeholder="The habit I want to build..." Text="{Binding MyHabit}" />
+
+            <Label Text="My Goal" FontAttributes="Bold" />
+            <Entry Placeholder="What I want to achieve..." Text="{Binding MyGoal}" />
+
+            <Label Text="I am a person who..." FontAttributes="Bold" />
+            <Editor Placeholder="Describe yourself and your values..." Text="{Binding IAmPersonWho}"
+                    AutoSize="TextChanges" MinimumHeightRequest="70" />
+
+            <Label Text="Strategies I will implement" FontAttributes="Bold" />
+            <Label Text="1." FontSize="13" TextColor="#555" />
+            <Editor Placeholder="First strategy..." Text="{Binding Strategy1}"
+                    AutoSize="TextChanges" MinimumHeightRequest="60" />
+            <Label Text="2." FontSize="13" TextColor="#555" />
+            <Editor Placeholder="Second strategy..." Text="{Binding Strategy2}"
+                    AutoSize="TextChanges" MinimumHeightRequest="60" />
+
+            <Label Text="To improve myself I will..." FontAttributes="Bold" />
+            <Editor Placeholder="Actions I will take..." Text="{Binding ToImproveMyselfIWill}"
+                    AutoSize="TextChanges" MinimumHeightRequest="70" />
+
+            <Label Text="Reward myself with..." FontAttributes="Bold" />
+            <Editor Placeholder="How I will celebrate progress..." Text="{Binding RewardMyselfWith}"
+                    AutoSize="TextChanges" MinimumHeightRequest="60" />
+
+            <Label Text="People I can talk to for encouragement" FontAttributes="Bold" />
+            <Editor Placeholder="Names of people who support me..." Text="{Binding PeopleForEncouragement}"
+                    AutoSize="TextChanges" MinimumHeightRequest="60" />
+
+            <Label Text="{Binding ErrorMessage}" TextColor="Red"
+                   IsVisible="{Binding ErrorMessage, Converter={StaticResource StringToBoolConverter}}" />
+
+            <Button Text="Unlock My Dashboard" Command="{Binding SubmitCommand}"
+                    BackgroundColor="#1A6B8A" TextColor="White" CornerRadius="8"
+                    HeightRequest="52" Margin="0,8,0,0" />
+            <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" />
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

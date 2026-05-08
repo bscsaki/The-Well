@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:TheWell.MAUI.ViewModels"
+             x:Class="TheWell.MAUI.Views.SettingsPage"
+             x:DataType="vm:SettingsViewModel"
+             Title="Settings">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="24" Spacing="20">
+            <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" />
+
+            <!-- Profile info -->
+            <Label Text="My Account" FontSize="20" FontAttributes="Bold" TextColor="#1A6B8A" />
+
+            <Frame BackgroundColor="#F5F5F5" CornerRadius="10" Padding="16" HasShadow="False">
+                <VerticalStackLayout Spacing="8">
+                    <Label Text="E-number" FontSize="12" TextColor="#888" />
+                    <Label Text="{Binding ENumber}" FontSize="16" FontAttributes="Bold" />
+                    <BoxView HeightRequest="1" BackgroundColor="#DDD" Margin="0,4" />
+                    <Label Text="University Email" FontSize="12" TextColor="#888" />
+                    <Label Text="{Binding UniversityEmail}" FontSize="16" FontAttributes="Bold" />
+                </VerticalStackLayout>
+            </Frame>
+
+            <!-- Change password -->
+            <Label Text="Change Password" FontSize="18" FontAttributes="Bold" TextColor="#1A6B8A" Margin="0,8,0,0" />
+
+            <Entry Placeholder="Current password" Text="{Binding CurrentPassword}" IsPassword="True" />
+            <Entry Placeholder="New password (min 8 chars)" Text="{Binding NewPassword}" IsPassword="True" />
+            <Entry Placeholder="Confirm new password" Text="{Binding ConfirmPassword}" IsPassword="True" />
+
+            <Label Text="{Binding Message}" FontAttributes="Bold" HorizontalOptions="Center">
+                <Label.Triggers>
+                    <DataTrigger TargetType="Label" Binding="{Binding MessageIsError}" Value="True">
+                        <Setter Property="TextColor" Value="Red" />
+                    </DataTrigger>
+                    <DataTrigger TargetType="Label" Binding="{Binding MessageIsError}" Value="False">
+                        <Setter Property="TextColor" Value="Green" />
+                    </DataTrigger>
+                </Label.Triggers>
+            </Label>
+
+            <Button Text="Update Password" Command="{Binding ChangePasswordCommand}"
+                    BackgroundColor="#1A6B8A" TextColor="White" CornerRadius="8" HeightRequest="48" />
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

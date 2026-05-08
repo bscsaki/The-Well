@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:TheWell.MAUI.ViewModels"
+             xmlns:controls="clr-namespace:TheWell.MAUI.Controls"
+             x:Class="TheWell.MAUI.Views.LogEntryPage"
+             x:DataType="vm:LogEntryViewModel"
+             Title="Today's Log">
+
+    <Grid>
+        <!-- Main content -->
+        <ScrollView>
+            <VerticalStackLayout Padding="32" Spacing="20">
+                <Label Text="How did today go?" FontSize="22" FontAttributes="Bold"
+                       HorizontalOptions="Center" />
+                <Label x:Name="TodayLabel" HorizontalOptions="Center" TextColor="#888" />
+
+                <Frame BackgroundColor="#F0F9FF" CornerRadius="16" Padding="24" HasShadow="False">
+                    <VerticalStackLayout Spacing="12" HorizontalOptions="Center">
+                        <Label Text="I completed my habit today" HorizontalOptions="Center"
+                               FontSize="16" />
+                        <Switch IsToggled="{Binding IsCompleted}" HorizontalOptions="Center"
+                                OnColor="#1A6B8A" />
+                    </VerticalStackLayout>
+                </Frame>
+
+                <Label Text="Add a note (optional)" FontAttributes="Bold" />
+                <Editor Placeholder="How are you feeling? Any reflections..." Text="{Binding Note}"
+                        AutoSize="TextChanges" MinimumHeightRequest="100" />
+
+                <Label Text="{Binding StatusMessage}" TextColor="#1A6B8A"
+                       HorizontalOptions="Center" FontAttributes="Bold"
+                       IsVisible="{Binding StatusMessage, Converter={StaticResource StringToBoolConverter}}" />
+
+                <Button Text="Save Log" Command="{Binding SubmitCommand}"
+                        BackgroundColor="#1A6B8A" TextColor="White" CornerRadius="8" HeightRequest="52" />
+                <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" />
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <!-- Confetti overlay (full screen, transparent, on top) -->
+        <controls:ConfettiCanvasView x:Name="ConfettiCanvas"
+            InputTransparent="True"
+            HorizontalOptions="Fill" VerticalOptions="Fill"
+            IsVisible="False" />
+    </Grid>
+</ContentPage>

@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:TheWell.MAUI.ViewModels"
+             xmlns:controls="clr-namespace:TheWell.MAUI.Controls"
+             xmlns:core="clr-namespace:TheWell.Core.DTOs;assembly=TheWell.Core"
+             x:Class="TheWell.MAUI.Views.GraduationPage"
+             x:DataType="vm:GraduationViewModel"
+             Title="Congratulations!">
+
+    <ScrollView>
+        <VerticalStackLayout Spacing="0">
+
+            <!-- Trophy header -->
+            <VerticalStackLayout BackgroundColor="#1A6B8A" Padding="32,48" Spacing="16">
+                <controls:WellCanvasView FillPercent="1.0"
+                    HeightRequest="120" WidthRequest="120"
+                    HorizontalOptions="Center" />
+                <Label Text="🎓 You Did It!" FontSize="28" FontAttributes="Bold"
+                       TextColor="White" HorizontalOptions="Center" />
+                <Label Text="60-Day Course Complete" FontSize="16" TextColor="#C8E8F4"
+                       HorizontalOptions="Center" />
+            </VerticalStackLayout>
+
+            <!-- Stats summary -->
+            <Grid ColumnDefinitions="*,*" BackgroundColor="#F0F9FF" Padding="24,20">
+                <VerticalStackLayout Grid.Column="0" HorizontalOptions="Center" Spacing="4">
+                    <Label Text="{Binding Stats.TotalCompleted}" FontSize="36" FontAttributes="Bold"
+                           TextColor="#1A6B8A" HorizontalOptions="Center" />
+                    <Label Text="Days Completed" FontSize="13" TextColor="#555"
+                           HorizontalOptions="Center" />
+                </VerticalStackLayout>
+                <VerticalStackLayout Grid.Column="1" HorizontalOptions="Center" Spacing="4">
+                    <Label Text="{Binding Stats.CurrentStreak}" FontSize="36" FontAttributes="Bold"
+                           TextColor="#1A6B8A" HorizontalOptions="Center" />
+                    <Label Text="Day Streak" FontSize="13" TextColor="#555"
+                           HorizontalOptions="Center" />
+                </VerticalStackLayout>
+            </Grid>
+
+            <!-- Log history -->
+            <Label Text="Your 60-Day Journey" FontSize="18" FontAttributes="Bold"
+                   Margin="16,20,16,8" />
+
+            <CollectionView ItemsSource="{Binding Logs}" Margin="12,0">
+                <CollectionView.ItemTemplate>
+                    <DataTemplate x:DataType="core:DailyLogResponse">
+                        <Frame Margin="0,4" Padding="12" CornerRadius="8" HasShadow="False"
+                               BackgroundColor="{Binding IsCompleted, Converter={StaticResource BoolToColorConverter}}">
+                            <Grid ColumnDefinitions="Auto,*,Auto">
+                                <Label Grid.Column="0" Text="{Binding LogDate}" FontSize="13"
+                                       TextColor="#555" VerticalOptions="Center" />
+                                <Label Grid.Column="1" Text="{Binding Note}" FontSize="13"
+                                       TextColor="#333" Margin="8,0" LineBreakMode="TailTruncation" />
+                                <Label Grid.Column="2"
+                                       Text="{Binding IsCompleted, Converter={StaticResource BoolToCheckConverter}}"
+                                       FontSize="18" VerticalOptions="Center" />
+                            </Grid>
+                        </Frame>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+
+            <BoxView HeightRequest="32" BackgroundColor="Transparent" />
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

@@ -1,0 +1,60 @@
+@page "/test-email"
+@using TheWell.Core.Interfaces
+@inject IEmailService EmailService
+@inject IConfiguration Config
+@rendermode InteractiveServer
+
+<PageTitle>Test Email — The Well Admin</PageTitle>
+<h1>Email Diagnostic</h1>
+
+<div class="mb-3">
+    <p><strong>SendGrid API Key loaded:</strong>
+        @(string.IsNullOrEmpty(Config["SendGrid:ApiKey"]) ? "❌ NOT FOUND" : $"✅ {Config["SendGrid:ApiKey"]![..10]}...")
+    </p>
+    <p><strong>Template ID loaded:</strong>
+        @(string.IsNullOrEmpty(Config["SendGrid:WelcomeTemplateId"]) ? "❌ NOT FOUND" : $"✅ {Config["SendGrid:WelcomeTemplateId"]}")
+    </p>
+    <p><strong>From email:</strong> @(Config["SendGrid:FromEmail"] ?? "❌ NOT FOUND")</p>
+</div>
+
+<div class="row g-2 mb-3">
+    <div class="col-md-5">
+        <input class="form-control" @bind="_toEmail" placeholder="Send test to (email address)" />
+    </div>
+    <div class="col-md-2">
+        <button class="btn btn-primary w-100" @onclick="SendTest" disabled="@_busy">Send Test</button>
+    </div>
+</div>
+
+@if (_result is not null)
+{
+    <div class="alert @(_success ? "alert-success" : "alert-danger")">
+        <pre style="white-space:pre-wrap;">@_result</pre>
+    </div>
+}
+
+@code {
+    private string _toEmail = "";
+    private string? _result;
+    private bool _success;
+    private bool _busy;
+
+    private async Task SendTest()
+    {
+        if (string.IsNullOrWhiteSpace(_toEmail)) { _result = "Enter an email address."; return; }
+        _busy = true;
+        _result = null;
+        try
+        {
+            await EmailService.SendWelcomeEmailAsync(_toEmail, "TEST-ENUMBER", "TestPass123");
+            _success = true;
+            _result = $"✅ SendGrid accepted the request (202). Check {_toEmail} inbox and spam.";
+        }
+        catch (Exception ex)
+        {
+            _success = false;
+            _result = $"❌ {ex.Message}";
+        }
+        finally { _busy = false; }
+    }
+}

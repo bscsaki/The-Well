@@ -1,0 +1,28 @@
+{
+  "ConnectionStrings": {
+    "DefaultConnections": "Host=YOUR_NEON_HOST;Database=neondb;Username=YOUR_USERNAME;Password=YOUR_PASSWORD;SslMode=VerifyFull;Channel Binding=Require;"
+  },
+  "Jwt": {
+    "Secret": "REPLACE_WITH_MIN_32_CHAR_RANDOM_SECRET",
+    "Issuer": "thewell-api",
+    "Audience": "thewell-maui"
+  },
+  "SendGrid": {
+    "ApiKey": "SG.REPLACE_WITH_YOUR_SENDGRID_API_KEY",
+    "FromEmail": "REPLACE_WITH_YOUR_VERIFIED_SENDER_EMAIL",
+    "FromName": "The Well",
+    "WelcomeTemplateId": "d-REPLACE_WITH_YOUR_SENDGRID_TEMPLATE_ID"
+  },
+  "Encryption": {
+    "Key2": "REPLACE_WITH_BASE64_ENCODED_32_BYTE_AES_KEY"
+  },
+  "WordPress": {
+    "BaseUrl": "https://YOUR_WORDPRESS_SITE_URL"
+  },
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.AspNetCore": "Warning"
+    }
+  }
+}

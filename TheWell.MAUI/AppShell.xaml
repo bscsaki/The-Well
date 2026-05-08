@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Shell x:Class="TheWell.MAUI.AppShell"
+       xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+       xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+       xmlns:views="clr-namespace:TheWell.MAUI.Views"
+       FlyoutBehavior="Disabled"
+       Title="The Well">
+
+    <!-- Pre-auth pages (no tab bar) -->
+    <ShellContent Route="LoginPage"      ContentTemplate="{DataTemplate views:LoginPage}" />
+    <ShellContent Route="IntakePage"     ContentTemplate="{DataTemplate views:IntakePage}" />
+    <ShellContent Route="GraduationPage" ContentTemplate="{DataTemplate views:GraduationPage}" />
+
+    <!-- Main app — bottom tab bar (no icons — titles carry the letters) -->
+    <TabBar>
+        <Tab x:Name="HomeTab"     Title="W  Well">
+            <ShellContent Route="DashboardPage" ContentTemplate="{DataTemplate views:DashboardPage}" />
+        </Tab>
+        <Tab x:Name="HabitTab"   Title="H">
+            <ShellContent Route="HabitPage"    ContentTemplate="{DataTemplate views:GoalPage}" />
+        </Tab>
+        <Tab x:Name="CourseTab"  Title="C">
+            <ShellContent Route="CoursePage"   ContentTemplate="{DataTemplate views:CoursePage}" />
+        </Tab>
+        <Tab x:Name="SettingsTab" Title="S">
+            <ShellContent Route="SettingsPage" ContentTemplate="{DataTemplate views:SettingsPage}" />
+        </Tab>
+    </TabBar>
+
+</Shell>

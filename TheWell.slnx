@@ -1,0 +1,8 @@
+<Solution>
+  <Project Path="TheWell.Admin/TheWell.Admin.csproj" />
+  <Project Path="TheWell.API/TheWell.API.csproj" />
+  <Project Path="TheWell.Core/TheWell.Core.csproj" />
+  <Project Path="TheWell.Data/TheWell.Data.csproj" />
+  <Project Path="TheWell.MAUI/TheWell.MAUI.csproj" />
+  <Project Path="TheWell.Tests/TheWell.Tests.csproj" />
+</Solution>

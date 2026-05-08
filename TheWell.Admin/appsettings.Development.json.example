@@ -1,0 +1,20 @@
+{
+  "ConnectionStrings": {
+    "DefaultConnections": "Host=YOUR_NEON_HOST;Database=neondb;Username=YOUR_USERNAME;Password=YOUR_PASSWORD;SslMode=VerifyFull;Channel Binding=Require;"
+  },
+  "Encryption": {
+    "Key2": "REPLACE_WITH_BASE64_ENCODED_32_BYTE_AES_KEY"
+  },
+  "SendGrid": {
+    "ApiKey": "SG.REPLACE_WITH_YOUR_SENDGRID_API_KEY",
+    "FromEmail": "REPLACE_WITH_YOUR_VERIFIED_SENDER_EMAIL",
+    "FromName": "The Well",
+    "WelcomeTemplateId": "d-REPLACE_WITH_YOUR_SENDGRID_TEMPLATE_ID"
+  },
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.AspNetCore": "Warning"
+    }
+  }
+}

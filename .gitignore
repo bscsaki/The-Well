@@ -1,0 +1,40 @@
+# ── Build output ──────────────────────────────────────────────────────────────
+bin/
+obj/
+*.user
+
+# ── Secrets — NEVER commit these ──────────────────────────────────────────────
+# Real credentials live here. Copy the .example file and fill in your values.
+**/appsettings.Development.json
+**/appsettings.Production.json
+**/appsettings.Staging.json
+
+# .NET user secrets
+**/secrets.json
+**/*.pfx
+**/*.p12
+
+# ── Claude Code session files ──────────────────────────────────────────────────
+.claude/
+
+# ── Rider / VS / VS Code ──────────────────────────────────────────────────────
+.vs/
+.idea/
+*.suo
+*.DS_Store
+.vscode/
+
+# ── NuGet ─────────────────────────────────────────────────────────────────────
+*.nupkg
+packages/
+project.lock.json
+
+# ── MAUI / Android build artefacts ────────────────────────────────────────────
+*.apk
+*.aab
+*.ipa
+*.keystore
+
+# ── Logs ──────────────────────────────────────────────────────────────────────
+*.log
+logs/

@@ -1,0 +1,189 @@
+@page "/users"
+@using TheWell.Core.Entities
+@using TheWell.Core.Interfaces
+@using TheWell.Data.Repositories
+@inject UserRepository UserRepo
+@inject IEncryptionService Encryption
+@inject IEmailService EmailService
+@rendermode InteractiveServer
+
+<PageTitle>Users — The Well Admin</PageTitle>
+
+<h1>Provisioned Users</h1>
+
+<div class="mb-4">
+    <h4>Add New User</h4>
+    <div class="row g-2">
+        <div class="col-md-4">
+            <input class="form-control" @bind="_newEid" placeholder="E-number" />
+        </div>
+        <div class="col-md-4">
+            <input class="form-control" @bind="_newEmail" placeholder="University Email" type="email" />
+        </div>
+        <div class="col-md-2">
+            <button class="btn btn-primary w-100" @onclick="ProvisionUser">Add User</button>
+        </div>
+    </div>
+    @if (_message is not null)
+    {
+        <div class="alert alert-warning mt-2" style="font-size:1.1rem;">@_message</div>
+    }
+    @if (_tempPassword is not null)
+    {
+        <div class="alert alert-danger mt-1">
+            <strong>TEMP PASSWORD (copy exactly, case-sensitive):</strong><br />
+            <code style="font-size:1.4rem; letter-spacing:2px; user-select:all;">@_tempPassword</code>
+        </div>
+    }
+</div>
+
+<h4>All Users</h4>
+@if (_users is null)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <table class="table table-striped align-middle">
+        <thead>
+            <tr>
+                <th style="width:48px">#</th>
+                <th>E-number</th>
+                <th>University Email</th>
+                <th>Status</th>
+                <th>Created</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @{ int _rowNum = 0; }
+            @foreach (var u in _users)
+            {
+                _rowNum++;
+                <tr>
+                    <td class="text-muted fw-bold">@_rowNum</td>
+                    <td>@SafeDecrypt(u.UniversityEID)</td>
+                    <td>@SafeDecrypt(u.Email)</td>
+                    <td>
+                        @if (u.AccountStatus == AccountStatuses.Pending)
+                        {
+                            <span class="badge bg-warning text-dark">Pending</span>
+                        }
+                        else if (u.AccountStatus == AccountStatuses.Active)
+                        {
+                            <span class="badge bg-success">Active</span>
+                        }
+                        else if (u.AccountStatus == AccountStatuses.Suspended)
+                        {
+                            <span class="badge bg-danger">Suspended</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-secondary">@u.AccountStatus</span>
+                        }
+                    </td>
+                    <td>@u.CreatedAt.ToString("yyyy-MM-dd")</td>
+                    <td>
+                        <button class="btn btn-sm btn-warning me-1" @onclick="() => ResetPassword(u)">
+                            Reset Password
+                        </button>
+                        <button class="btn btn-sm btn-danger" @onclick="() => DeleteUser(u)">
+                            Delete
+                        </button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<User>? _users;
+    private string _newEid = "";
+    private string _newEmail = "";
+    private string? _message;
+    private string? _tempPassword;
+
+    protected override async Task OnInitializedAsync() => await LoadUsers();
+    private async Task LoadUsers() => _users = await UserRepo.GetAllAsync();
+
+    private async Task ProvisionUser()
+    {
+        if (string.IsNullOrWhiteSpace(_newEid) || string.IsNullOrWhiteSpace(_newEmail))
+        {
+            _message = "E-number and University Email are required.";
+            return;
+        }
+
+        var tempPassword = Guid.NewGuid().ToString("N")[..12];
+        var capturedEmail = _newEmail;
+        var capturedEid   = _newEid;
+
+        var user = new User
+        {
+            UniversityEID      = Encryption.Encrypt(_newEid),
+            UniversityEIDHash  = Encryption.Hash(_newEid),
+            Email              = Encryption.Encrypt(_newEmail),
+            PasswordHash       = BCrypt.Net.BCrypt.HashPassword(tempPassword),
+            IsPasswordResetRequired = true,
+            AccountStatus      = AccountStatuses.Pending   // becomes Active after first login + password change
+        };
+        await UserRepo.AddAsync(user);
+
+        _tempPassword = tempPassword;
+        _message = $"User provisioned for E-number: {capturedEid}. Welcome email sent to {capturedEmail}.";
+        _newEid  = "";
+        _newEmail = "";
+
+        try
+        {
+            await EmailService.SendWelcomeEmailAsync(capturedEmail, capturedEid, tempPassword);
+        }
+        catch (Exception ex)
+        {
+            _message += $" ⚠️ Email failed: {ex.GetType().Name} — {ex.Message}";
+        }
+
+        await LoadUsers();
+    }
+
+    private async Task ResetPassword(User user)
+    {
+        var tempPassword = Guid.NewGuid().ToString("N")[..12];
+        user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(tempPassword);
+        user.IsPasswordResetRequired = true;
+        await UserRepo.SaveAsync();
+
+        _tempPassword = tempPassword;
+        var email = SafeDecrypt(user.Email);
+        var eid   = SafeDecrypt(user.UniversityEID);
+        _message = $"Password reset for E-number: {eid}.";
+
+        try
+        {
+            await EmailService.SendWelcomeEmailAsync(email, eid, tempPassword);
+            _message += " Reset email sent.";
+        }
+        catch (Exception ex)
+        {
+            _message += $" ⚠️ Email failed: {ex.GetType().Name} — {ex.Message}";
+        }
+
+        await LoadUsers();
+    }
+
+    private async Task DeleteUser(User user)
+    {
+        var eid = SafeDecrypt(user.UniversityEID);
+        await UserRepo.DeleteAsync(user);
+        _tempPassword = null;
+        _message = $"User {eid} has been deleted.";
+        await LoadUsers();
+    }
+
+    private string SafeDecrypt(string encrypted)
+    {
+        try { return Encryption.Decrypt(encrypted); }
+        catch { return "[encrypted]"; }
+    }
+}

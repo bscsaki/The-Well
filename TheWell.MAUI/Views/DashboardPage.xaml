@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:TheWell.MAUI.ViewModels"
+             xmlns:controls="clr-namespace:TheWell.MAUI.Controls"
+             x:Class="TheWell.MAUI.Views.DashboardPage"
+             x:DataType="vm:DashboardViewModel"
+             Title="Home">
+
+    <Grid RowDefinitions="Auto,*">
+
+        <!-- Sticky Habit Panel -->
+        <Frame Grid.Row="0" BackgroundColor="#E8F4F8" CornerRadius="0" Padding="16,10" HasShadow="True">
+            <Grid ColumnDefinitions="*,80,Auto" RowDefinitions="Auto">
+
+                <!-- Habit text -->
+                <VerticalStackLayout Grid.Column="0" Spacing="4" VerticalOptions="Center">
+                    <Label Text="My Habit" FontSize="12" TextColor="#888" />
+                    <Label Text="{Binding MyHabit}" FontSize="15" FontAttributes="Bold" LineBreakMode="WordWrap" />
+                    <Label FontSize="11" TextColor="#888">
+                        <Label.Text>
+                            <MultiBinding StringFormat="Day {0} of 60 · {1} completed">
+                                <Binding Path="CourseDayNumber" />
+                                <Binding Path="Stats.TotalCompleted" />
+                            </MultiBinding>
+                        </Label.Text>
+                    </Label>
+                </VerticalStackLayout>
+
+                <!-- Well fill circle -->
+                <controls:WellCanvasView Grid.Column="1"
+                                         FillPercent="{Binding WellFillPercent}"
+                                         HeightRequest="70" WidthRequest="70"
+                                         VerticalOptions="Center" />
+
+                <!-- Streak: big droplet image + ": N" label to its right -->
+                <HorizontalStackLayout Grid.Column="2" Spacing="4" VerticalOptions="Center">
+                    <Image Source="streak_icon.png"
+                           HeightRequest="72" WidthRequest="54"
+                           Aspect="AspectFit"
+                           VerticalOptions="Fill" />
+                    <Label VerticalOptions="Center" FontSize="16" FontAttributes="Bold" TextColor="#1A6B8A">
+                        <Label.Text>
+                            <MultiBinding StringFormat=": {0}">
+                                <Binding Path="CurrentStreak" />
+                            </MultiBinding>
+                        </Label.Text>
+                    </Label>
+                </HorizontalStackLayout>
+
+            </Grid>
+        </Frame>
+
+        <!-- Scrollable content -->
+        <RefreshView Grid.Row="1" Command="{Binding LoadCommand}" IsRefreshing="{Binding IsBusy}">
+            <ScrollView>
+                <VerticalStackLayout Spacing="0">
+
+                    <!-- Feed cards -->
+                    <VerticalStackLayout BindableLayout.ItemsSource="{Binding FeedItems}" Margin="0,8,0,0">
+                        <BindableLayout.ItemTemplate>
+                            <DataTemplate x:DataType="vm:FeedItem">
+                                <Frame Margin="12,4" Padding="16" CornerRadius="12" HasShadow="True">
+                                    <VerticalStackLayout Spacing="6">
+                                        <Label Text="{Binding Type}" FontSize="11" TextColor="#1A6B8A" FontAttributes="Bold" />
+                                        <Label Text="{Binding Title}" FontSize="15" FontAttributes="Bold" />
+                                        <Label Text="{Binding Body}" FontSize="13" TextColor="#444" LineBreakMode="WordWrap" />
+                                    </VerticalStackLayout>
+                                    <Frame.GestureRecognizers>
+                                        <TapGestureRecognizer
+                                            Command="{Binding Source={RelativeSource AncestorType={x:Type vm:DashboardViewModel}}, Path=FeedItemTappedCommand}"
+                                            CommandParameter="{Binding .}" />
+                                    </Frame.GestureRecognizers>
+                                </Frame>
+                            </DataTemplate>
+                        </BindableLayout.ItemTemplate>
+                    </VerticalStackLayout>
+
+                    <!-- 8-Week Calendar -->
+                    <Frame Margin="12,8,12,8" Padding="12" CornerRadius="12" HasShadow="True">
+                        <VerticalStackLayout Spacing="4">
+                            <Label Text="8-Week Journey" FontSize="14" FontAttributes="Bold" TextColor="#1A6B8A" />
+                            <Label Text="Blue = completed  ·  Orange = today  ·  Pink = editable  ·  Tap to log"
+                                   FontSize="10" TextColor="#888" Margin="0,0,0,4" />
+
+                            <!-- Day-of-week headers -->
+                            <Grid ColumnDefinitions="*,*,*,*,*,*,*" Padding="2,0">
+                                <Label Grid.Column="0" Text="M" HorizontalOptions="Center" FontSize="10" TextColor="#888" FontAttributes="Bold" />
+                                <Label Grid.Column="1" Text="T" HorizontalOptions="Center" FontSize="10" TextColor="#888" FontAttributes="Bold" />
+                                <Label Grid.Column="2" Text="W" HorizontalOptions="Center" FontSize="10" TextColor="#888" FontAttributes="Bold" />
+                                <Label Grid.Column="3" Text="T" HorizontalOptions="Center" FontSize="10" TextColor="#888" FontAttributes="Bold" />
+                                <Label Grid.Column="4" Text="F" HorizontalOptions="Center" FontSize="10" TextColor="#888" FontAttributes="Bold" />
+                                <Label Grid.Column="5" Text="S" HorizontalOptions="Center" FontSize="10" TextColor="#888" FontAttributes="Bold" />
+                                <Label Grid.Column="6" Text="S" HorizontalOptions="Center" FontSize="10" TextColor="#888" FontAttributes="Bold" />
+                            </Grid>
+
+                            <!-- No date message -->
+                            <Label Text="Course starting date not set yet. Check back soon."
+                                   IsVisible="{Binding HasCourseDate, Converter={StaticResource InvertBoolConverter}}"
+                                   TextColor="#888" FontSize="13" HorizontalOptions="Center"
+                                   Margin="0,8" />
+
+                            <!-- Calendar — CollectionView with Span=7 guarantees M-T-W-T-F-S-S alignment
+                                 on every screen size and platform. IsScrollingEnabled=False lets the outer
+                                 ScrollView handle scrolling. -->
+                            <CollectionView IsVisible="{Binding HasCourseDate}"
+                                            ItemsSource="{Binding CalendarDays}"
+                                            SelectionMode="None">
+                                <CollectionView.ItemsLayout>
+                                    <GridItemsLayout Orientation="Vertical"
+                                                     Span="7"
+                                                     HorizontalItemSpacing="2"
+                                                     VerticalItemSpacing="2" />
+                                </CollectionView.ItemsLayout>
+                                <CollectionView.ItemTemplate>
+                                    <DataTemplate x:DataType="vm:CalendarDay">
+
+                                        <!-- Square cell: top = date, bottom = goal day -->
+                                        <Grid RowDefinitions="52,Auto" Margin="0,0">
+
+                                            <Frame Grid.Row="0"
+                                                   Padding="0" CornerRadius="6"
+                                                   BackgroundColor="{Binding BackgroundColor}"
+                                                   HasShadow="False"
+                                                   HorizontalOptions="Fill">
+                                                <Grid RowDefinitions="*,Auto,*" Padding="2">
+
+                                                    <Label Grid.Row="0"
+                                                           Text="{Binding DateLabel}"
+                                                           HorizontalOptions="Center"
+                                                           VerticalOptions="Center"
+                                                           TextColor="{Binding TextColor}"
+                                                           FontSize="13" FontAttributes="Bold" />
+
+                                                    <BoxView Grid.Row="1"
+                                                             HeightRequest="0.7"
+                                                             BackgroundColor="{Binding DividerColor}"
+                                                             Margin="3,0" />
+
+                                                    <Label Grid.Row="2"
+                                                           Text="{Binding GoalLabel}"
+                                                           HorizontalOptions="Center"
+                                                           VerticalOptions="Center"
+                                                           TextColor="{Binding TextColor}"
+                                                           FontSize="9" Opacity="0.85" />
+                                                </Grid>
+                                                <Frame.GestureRecognizers>
+                                                    <TapGestureRecognizer Tapped="OnCalendarDayTapped"
+                                                                          CommandParameter="{Binding .}" />
+                                                </Frame.GestureRecognizers>
+                                            </Frame>
+
+                                            <!-- Week label pill (Monday only) -->
+                                            <Frame Grid.Row="1"
+                                                   IsVisible="{Binding HasModuleTitle}"
+                                                   BackgroundColor="#5B9BD5"
+                                                   CornerRadius="3" Padding="2,1"
+                                                   HasShadow="False"
+                                                   HorizontalOptions="Fill">
+                                                <Label Text="{Binding ModuleTitle}"
+                                                       FontSize="7" TextColor="White"
+                                                       LineBreakMode="TailTruncation" />
+                                            </Frame>
+
+                                        </Grid>
+                                    </DataTemplate>
+                                </CollectionView.ItemTemplate>
+                            </CollectionView>
+
+                        </VerticalStackLayout>
+                    </Frame>
+
+                </VerticalStackLayout>
+            </ScrollView>
+        </RefreshView>
+
+    </Grid>
+</ContentPage>

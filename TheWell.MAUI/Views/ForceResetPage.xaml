@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:TheWell.MAUI.ViewModels"
+             x:Class="TheWell.MAUI.Views.ForceResetPage"
+             x:DataType="vm:ForceResetViewModel"
+             Title="Set New Password">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="32" Spacing="16" VerticalOptions="Center">
+            <Label Text="Create Your Password" FontSize="24" FontAttributes="Bold" HorizontalOptions="Center" />
+            <Label Text="You must set a new password before continuing." HorizontalOptions="Center"
+                   TextColor="#555" HorizontalTextAlignment="Center" />
+
+            <Entry Placeholder="New Password" Text="{Binding NewPassword}" IsPassword="True" />
+            <Entry Placeholder="Confirm Password" Text="{Binding ConfirmPassword}" IsPassword="True" />
+
+            <Label Text="{Binding ErrorMessage}" TextColor="Red"
+                   IsVisible="{Binding ErrorMessage, Converter={StaticResource StringToBoolConverter}}" />
+
+            <Button Text="Set Password" Command="{Binding ResetPasswordCommand}"
+                    BackgroundColor="#1A6B8A" TextColor="White" CornerRadius="8" HeightRequest="48" />
+            <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" />
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>
